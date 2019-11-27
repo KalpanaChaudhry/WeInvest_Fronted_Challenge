@@ -315,7 +315,6 @@ function endProcess() {
   );
 
   await installPackages().catch(reason => reportError(reason));
-  await deleteFileInCurrentDir('setup.js').catch(reason => reportError(reason));
 
   if (repoRemoved) {
     process.stdout.write('\n');
