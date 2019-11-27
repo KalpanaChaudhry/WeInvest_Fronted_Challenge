@@ -1,0 +1,257 @@
+import React, { memo, useEffect } from 'react';
+import {
+  getInvestmentList,
+  getLoadingState,
+  getPortfolioError,
+} from './selectors';
+import { makeApiCallToFetchData, setLoadingState } from './actions';
+
+import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
+import { Helmet } from 'react-helmet';
+import Loadingindicator from '../../components/LoadingIndicator';
+import Paper from '@material-ui/core/Paper';
+import PropTypes from 'prop-types';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Typography from '@material-ui/core/Typography';
+import { compose } from 'redux';
+import { connect } from 'react-redux';
+import { createStructuredSelector } from 'reselect';
+import { groupBy } from 'lodash';
+import { makeStyles } from '@material-ui/core/styles';
+import reducer from './reducer';
+import saga from './saga';
+import { useHistory } from 'react-router-dom';
+import { useInjectReducer } from 'utils/injectReducer';
+import { useInjectSaga } from 'utils/injectSaga';
+import { useParams } from 'react-router-dom';
+
+const useStyles = makeStyles({
+  root: {
+    width: '100%',
+    overflowX: 'auto',
+  },
+  table: {
+    minWidth: 650,
+  },
+});
+
+// function createData(name, carbs, protein) {
+//   return { name, carbs, protein };
+// }
+
+// const rows = [
+//   createData('Frozen yoghurt', 24, 4.0),
+//   createData('Ice cream sandwich', 37, 4.3),
+//   createData('Eclair', 24, 6.0),
+//   createData('Cupcake', 67, 4.3),
+//   createData('Gingerbread', 49, 3.9),
+// ];
+
+const key = 'Portfolio';
+
+export function Portfolio({
+  investmentData,
+  isLoading,
+  err,
+  fetchData,
+  setLoading,
+}) {
+  const history = useHistory();
+  const { id } = useParams();
+  useInjectReducer({ key, reducer });
+  useInjectSaga({ key, saga });
+
+  useEffect(() => {
+    if (!investmentData || investmentData.length === 0) {
+      setLoading(true);
+      fetchData(id);
+    }
+  });
+  const classes = useStyles();
+
+  !isLoading && (console.log('in portfolio click', id, JSON.stringify(investmentData));
+  console.log(
+    'in portfoliocons',
+    investmentData,
+  );
+  
+  const data = investmentData[id - 1].constituents[0].instruments;
+  const bondModalSum = data.reduce((sum, a) =>
+    a.asset_class === 'BOND' ? a.model_weight + sum : null,
+  );
+
+  const data1 = investmentData[id - 1].constituents[0].instruments;
+  const bondActualSum = data1.reduce((sum, a) =>
+    a.asset_class === 'BOND' ? a.actual_weight + sum : null,
+  );
+
+  const s1 = 0;
+  const equityModalSum = investmentData[
+    id - 1
+  ].constituents[0].instruments.reduce((s1, a) =>
+    a.asset_class === 'EQUITY'
+      ? console.log('a.model_weight + sum', a.model_weight, s1)
+      : 0,
+  );
+  console.log(' in equityModalSum', equityModalSum);
+  const s2 = 0;
+  const equityActualSum = data.reduce((s2, b) =>
+    b.asset_class === 'EQUITY' ? b.actual_weight + s2 : 0,
+  );
+  console.log('in equityActualSum', equityActualSum);) 
+
+  
+
+  return (
+    <>
+      <Helmet>
+        <title>Portfolio</title>
+        <meta name="description" content="Portfolio Constituents" />
+      </Helmet>
+      {!isLoading && (
+        <Grid item xs={12} lg={12} sm={6}>
+          <Paper className={classes.root}>
+            <Grid>
+              <h1>Portfolio Constituents</h1>
+              <Button
+                variant="contained"
+                color="primary"
+                href="#contained-buttons"
+                style={{ float: 'right' }}
+              >
+                Save Continue
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                style={{ float: 'right' }}
+              >
+                Rebalance
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                style={{ float: 'right' }}
+              >
+                Reset
+              </Button>
+            </Grid>
+
+            <Table className={classes.table} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Category/Stock</TableCell>
+
+                  <TableCell align="right">Modal Weight(%)</TableCell>
+                  <TableCell align="right">Weight(100%)</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                <TableRow>
+                  <TableCell>BOND</TableCell>
+                  <TableCell align="right">
+                    <b>{bondModalSum}&nbsp;%</b>
+                  </TableCell>
+                  <TableCell align="right">
+                    <b>{bondActualSum}&nbsp;%</b>
+                  </TableCell>
+                </TableRow>
+
+                {investmentData[id - 1].constituents[0].instruments.map(ele =>
+                  ele.asset_class === 'BOND' ? (
+                    <TableRow key={ele.id}>
+                      <TableCell component="th" scope="row">
+                        {ele.name}
+                      </TableCell>
+                      <TableCell align="right">
+                        {ele.model_weight}&nbsp;%
+                      </TableCell>
+                      <TableCell align="right">{ele.actual_weight}</TableCell>
+                    </TableRow>
+                  ) : null,
+                )}
+
+                <TableRow>
+                  <TableCell>EQUITY</TableCell>
+                  <TableCell align="right">
+                    <b>{equityModalSum}&nbsp;%</b>
+                  </TableCell>
+                  <TableCell align="right">
+                    <b>{equityActualSum}&nbsp;%</b>
+                  </TableCell>
+                </TableRow>
+                {investmentData[id - 1].constituents[0].instruments.map(ele =>
+                  ele.asset_class === 'EQUITY' ? (
+                    <TableRow key={ele.id}>
+                      <TableCell component="th" scope="row">
+                        {ele.name}
+                      </TableCell>
+                      <TableCell align="right">
+                        {ele.model_weight}&nbsp;%
+                      </TableCell>
+                      <TableCell align="right">{ele.actual_weight}</TableCell>
+                    </TableRow>
+                  ) : null,
+                )}
+                <TableRow>
+                  <TableCell>CASH</TableCell>
+                </TableRow>
+                {investmentData[id - 1].constituents[0].instruments.map(ele =>
+                  ele.asset_class === 'CASH' ? (
+                    <TableRow key={ele.id}>
+                      <TableCell component="th" scope="row">
+                        {ele.name}
+                      </TableCell>
+                      <TableCell align="right">
+                        {ele.model_weight}&nbsp;%
+                      </TableCell>
+                      <TableCell align="right">{ele.actual_weight}</TableCell>
+                    </TableRow>
+                  ) : null,
+                )}
+              </TableBody>
+            </Table>
+          </Paper>
+        </Grid>
+      )}
+      {isLoading && <Loadingindicator />}
+    </>
+  );
+}
+
+Portfolio.PropTypes = {
+  investmentData: PropTypes.array,
+  err: PropTypes.object,
+  isLoading: PropTypes.bool,
+  fetchData: PropTypes.func,
+  setLoading: PropTypes.func,
+};
+
+const mapStateToProps = createStructuredSelector({
+  investmentData: getInvestmentList() || [],
+  err: getPortfolioError(),
+  isLoading: getLoadingState(),
+});
+
+export function mapDispatchToProps(dispatch) {
+  return {
+    fetchData: id => dispatch(makeApiCallToFetchData(id)),
+    setLoading: isLoading => dispatch(setLoadingState(isLoading)),
+  };
+}
+
+const withConnect = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+);
+
+export default compose(
+  withConnect,
+  memo,
+)(Portfolio);
